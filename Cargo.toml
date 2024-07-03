@@ -10,6 +10,6 @@ homepage = "https://github.com/LiorKaufman/didi_file_format"
 documentation = "https://github.com/LiorKaufman/didi_file_format"
 readme = "README.md"
 keywords = ["file_format", "learning", "hobby"]
-categories = ["hobby", "file_format"]
+categories = ["Filesystem"]
 
 [dependencies]
