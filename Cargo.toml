@@ -3,6 +3,13 @@ name = "didi_file_format"
 version = "0.1.0"
 authors = ["Lior Kaufman liorka1990@gmail.com"]
 edition = "2021"
+description = "A brief description of your package"
+license = "MIT"
+repository = "https://github.com/LiorKaufman/didi_file_format"
+homepage = "https://github.com/LiorKaufman/didi_file_format"
+documentation = "https://github.com/LiorKaufman/didi_file_format"
+readme = "README.md"
+keywords = ["file format", "learning", "hobby"]
+categories = ["hobby", "file formats"]
 
 [dependencies]
-rand = "0.8.5"
