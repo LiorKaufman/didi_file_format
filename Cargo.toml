@@ -9,7 +9,7 @@ repository = "https://github.com/LiorKaufman/didi_file_format"
 homepage = "https://github.com/LiorKaufman/didi_file_format"
 documentation = "https://github.com/LiorKaufman/didi_file_format"
 readme = "README.md"
-keywords = ["file format", "learning", "hobby"]
-categories = ["hobby", "file formats"]
+keywords = ["file_format", "learning", "hobby"]
+categories = ["hobby", "file_format"]
 
 [dependencies]
