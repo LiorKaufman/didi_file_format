@@ -1,0 +1,8 @@
+[package]
+name = "didi_file_format"
+version = "0.1.0"
+authors = ["Lior Kaufman liorka1990@gmail.com"]
+edition = "2021"
+
+[dependencies]
+rand = "0.8.5"
