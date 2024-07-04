@@ -1,5 +1,7 @@
-use std::io::{self, BufReader, BufWriter, Read, Write};
 use std::fs::File;
+use std::io::{self, BufReader, BufWriter, Read, Write};
+
+const MAGIC_NUMBER: &[u8] = b"DIDI";
 
 /// Encodes data using Run-Length Encoding
 ///
@@ -43,60 +45,85 @@ pub fn rle_decode(data: &str) -> String {
 
 /// Writes data to a file with metadata about the presence of a search string
 ///
-/// This function encodes the data using Run-Length Encoding, then writes it to
-/// a file along with the search string used as metadata.
+/// This function checks if the search string is present in the original data,
+/// encodes the data using Run-Length Encoding, then writes it to a file along
+/// with the search string and a true/false statement as metadata.
 pub fn write_didi(file_path: &str, data: &str, search_string: &str) -> io::Result<()> {
+    let contains_search_string = data.contains(search_string);
     let encoded_data = rle_encode(data);
 
     let mut file = BufWriter::new(File::create(file_path)?);
-    file.write_all(&[search_string.len() as u8])?;  // Write length of the search string
-    file.write_all(search_string.as_bytes())?;  // Write the search string
-    file.write_all(encoded_data.as_bytes())?;  // Write encoded data
+    file.write_all(MAGIC_NUMBER)?; // Write magic number
+    file.write_all(&[search_string.len() as u8])?; // Write length of the search string
+    file.write_all(search_string.as_bytes())?; // Write the search string
+    file.write_all(&[contains_search_string as u8])?; // Write true/false statement
+    file.write_all(encoded_data.as_bytes())?; // Write encoded data
 
     Ok(())
 }
 
-/// Reads data from a file, checking metadata for the presence of a search string
-///
-/// This function reads the metadata and encoded data from a file, decodes the
-/// data, and returns it along with the search string stored in the metadata.
-pub fn read_didi(file_path: &str) -> io::Result<(String, String)> {
+pub fn read_didi(file_path: &str) -> io::Result<(String, String, bool)> {
     let mut file = BufReader::new(File::open(file_path)?);
 
-    let mut length = [0; 1];
-    file.read_exact(&mut length)?;  // Read length of the search string
-    let length = length[0] as usize;
+    let mut magic_buf = [0; 4];
+    file.read_exact(&mut magic_buf)?; // Read magic number
+    if magic_buf != MAGIC_NUMBER {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Invalid magic number",
+        ));
+    }
 
-    let mut search_string = vec![0; length];
-    file.read_exact(&mut search_string)?;  // Read the search string
-    let search_string = String::from_utf8(search_string).unwrap();
+    let mut length_buf = [0; 1];
+    file.read_exact(&mut length_buf)?; // Read length of the search string
+    let search_string_length = length_buf[0] as usize;
+
+    let mut search_string_buf = vec![0; search_string_length];
+    file.read_exact(&mut search_string_buf)?; // Read the search string
+    let search_string = String::from_utf8(search_string_buf)
+        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
+
+    let mut contains_buf = [0; 1];
+    file.read_exact(&mut contains_buf)?; // Read true/false statement
+    let contains_search_string = contains_buf[0] != 0;
 
     let mut encoded_data = String::new();
-    file.read_to_string(&mut encoded_data)?;  // Read encoded data
+    file.read_to_string(&mut encoded_data)?; // Read encoded data
 
     let decoded_data = rle_decode(&encoded_data);
 
-    Ok((decoded_data, search_string))
+    Ok((decoded_data, search_string, contains_search_string))
 }
-
 
 /// Sniffs the file to determine what string is stored in the metadata
 ///
 /// This function reads the metadata from the file to determine what string was
-/// stored as the search string.
-pub fn sniffer(file_path: &str) -> io::Result<String> {
+/// stored as the search string and whether the search string was present in the
+/// original data.
+pub fn sniffer(file_path: &str) -> io::Result<(String, bool)> {
     let mut file = BufReader::new(File::open(file_path)?);
+
+    let mut magic_buf = [0; 4];
+    file.read_exact(&mut magic_buf)?;  // Read magic number
+    if magic_buf != MAGIC_NUMBER {
+        return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid magic number"));
+    }
+
     let mut length_buf = [0; 1];
-    file.read_exact(&mut length_buf)?;  // Read exactly 1 byte to determine the length of the search string
+    file.read_exact(&mut length_buf)?; // Read length of the search string
     let search_string_length = length_buf[0] as usize;
 
     let mut search_string_buf = vec![0; search_string_length];
-    file.read_exact(&mut search_string_buf)?;  // Read the search string bytes
+    file.read_exact(&mut search_string_buf)?; // Read the search string bytes
 
     let search_string = String::from_utf8(search_string_buf)
         .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))?;
 
-    Ok(search_string)  
+    let mut contains_buf = [0; 1];
+    file.read_exact(&mut contains_buf)?; // Read true/false statement
+    let contains_search_string = contains_buf[0] != 0;
+
+    Ok((search_string, contains_search_string))
 }
 #[cfg(test)]
 mod tests {
@@ -116,20 +143,23 @@ mod tests {
 
     #[test]
     fn test_write_and_read_didi() {
-        let data = "aaabbcccc";
-        let search_string = "a3";
+        let data = "aaabbccccxyz";
+        let search_string = "xyz";
         write_didi("test.didi", data, search_string).unwrap();
-        let (decoded_data, stored_search_string) = read_didi("test.didi").unwrap();
-        assert_eq!(decoded_data, "aaabbcccc");
+        let (decoded_data, stored_search_string, found_search_string) =
+            read_didi("test.didi").unwrap();
+        assert_eq!(decoded_data, "aaabbccccxyz");
         assert_eq!(stored_search_string, search_string);
+        assert_eq!(found_search_string, true);
     }
 
     #[test]
     fn test_sniffer() {
         let data = "aaabbcccc";
         let search_string = "abccc";
-        write_didi("test.didi", data, search_string).unwrap();
-        let stored_search_string = sniffer("test.didi").unwrap();
+        write_didi("test_sniffer.didi", data, search_string).unwrap();
+        let (stored_search_string, contains_search_string) = sniffer("test_sniffer.didi").unwrap();
         assert_eq!(stored_search_string, search_string);
+        assert_eq!(contains_search_string, data.contains(search_string));
     }
 }

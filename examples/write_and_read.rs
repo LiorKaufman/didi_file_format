@@ -10,9 +10,11 @@ fn main() -> std::io::Result<()> {
     write_didi("example.didi", data, search_string)?;
 
     // Read data from file
-    let (decoded_data, stored_search_string) = read_didi("example.didi")?;
+    let (decoded_data, stored_search_string, found_string) = read_didi("example.didi")?;
     println!("Decoded Data: {}", decoded_data);
     println!("Stored Search String: {}", stored_search_string);
+    println!("Do Search String: {} exists in the file: {}", stored_search_string, found_string);
+
 
     Ok(())
 }
