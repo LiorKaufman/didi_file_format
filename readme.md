@@ -58,7 +58,7 @@ fn main() -> std::io::Result<()> {
     println!("Sniffer found the stored search string: {}", stored_search_string);
     Ok(())
 }
-
+```
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
