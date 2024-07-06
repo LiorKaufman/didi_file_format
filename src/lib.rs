@@ -61,7 +61,11 @@ pub fn write_didi(file_path: &str, data: &str, search_string: &str) -> io::Resul
 
     Ok(())
 }
-
+/// Reads data from a file, checking metadata for the presence of a search string
+///
+/// This function reads the metadata and encoded data from a file, decodes the
+/// data, and returns it along with the search string and a boolean indicating
+/// if the search string was found in the original data.
 pub fn read_didi(file_path: &str) -> io::Result<(String, String, bool)> {
     let mut file = BufReader::new(File::open(file_path)?);
 
@@ -104,9 +108,12 @@ pub fn sniffer(file_path: &str) -> io::Result<(String, bool)> {
     let mut file = BufReader::new(File::open(file_path)?);
 
     let mut magic_buf = [0; 4];
-    file.read_exact(&mut magic_buf)?;  // Read magic number
+    file.read_exact(&mut magic_buf)?; // Read magic number
     if magic_buf != MAGIC_NUMBER {
-        return Err(io::Error::new(io::ErrorKind::InvalidData, "Invalid magic number"));
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Invalid magic number",
+        ));
     }
 
     let mut length_buf = [0; 1];
@@ -124,6 +131,7 @@ pub fn sniffer(file_path: &str) -> io::Result<(String, bool)> {
     let contains_search_string = contains_buf[0] != 0;
 
     Ok((search_string, contains_search_string))
+
 }
 #[cfg(test)]
 mod tests {

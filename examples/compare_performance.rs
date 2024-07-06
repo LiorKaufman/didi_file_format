@@ -55,7 +55,6 @@ fn main() -> io::Result<()> {
 
     // Measure performance of sniffer
     let start_sniffer = Instant::now();
-
     let (stored_search_string, found_sniffer): (String, bool) = sniffer("large_example.didi")?;
     let duration_sniffer = start_sniffer.elapsed();
 
@@ -64,10 +63,9 @@ fn main() -> io::Result<()> {
     let found_manual = manual_search("large_example.didi", search_string);
     let duration_manual = start_manual.elapsed();
 
-    // Print results
-    println!("Sniffer found the search: {}", stored_search_string);
+    println!("Sniffer - found the search string '{}': {}", stored_search_string, found_sniffer);
     println!("Sniffer duration: {:?}", duration_sniffer);
-    println!("Manual search found the string: {} {}", search_string,found_manual);
+    println!("Manual search - found the search string '{}': {}", search_string, found_manual);
     println!("Manual search duration: {:?}", duration_manual);
 
     Ok(())
