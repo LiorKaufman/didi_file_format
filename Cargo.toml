@@ -1,6 +1,6 @@
 [package]
 name = "didi_file_format"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Lior Kaufman liorka1990@gmail.com"]
 edition = "2021"
 description = "A brief description of your package"
