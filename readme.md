@@ -14,7 +14,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-didi_file_format = "0.1.0"
+didi_file_format = "0.1.1"
 ```
 
 ## Usage
